@@ -4,6 +4,7 @@ import { computed } from 'vue'
 import VueJsonPretty from 'vue-json-pretty'
 import { useTheme } from '../../../composables/useTheme'
 import 'vue-json-pretty/lib/styles.css'
+import OALazy from '../Lazy/OALazy.vue'
 
 const props = defineProps({
   code: {
@@ -33,11 +34,13 @@ const theme = computed(() => {
 </script>
 
 <template>
-  <VueJsonPretty
-    :data="json"
-    :theme="theme"
-    :deep="deep"
-    show-icon
-    class="p-2"
-  />
+  <OALazy>
+    <VueJsonPretty
+      :data="json"
+      :theme="theme"
+      :deep="deep"
+      show-icon
+      class="p-2"
+    />
+  </OALazy>
 </template>

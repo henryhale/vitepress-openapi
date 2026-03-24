@@ -27,11 +27,18 @@ export default defineConfig({
         globals: {
           vue: 'Vue',
         },
-        manualChunks: {},
+        // manualChunks: {},
         minifyInternalExports: true,
-        compact: true
+        compact: true,
+        manualChunks(id) {
+          if (id.includes('node_modules/vue-json-pretty')) {
+            return 'vue-json-pretty'
+          }
+        }
       },
     },
+    cssCodeSplit: true,
+
     // minify: 'terser',
     // terserOptions: {
     //   format: {

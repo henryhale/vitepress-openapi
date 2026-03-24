@@ -5,7 +5,7 @@ import ExampleBlock from './components/ExampleBlock.vue'
 import SandboxIframe from './components/sandbox/SandboxIframe.vue'
 import ScopeConfigurationTabs from './components/ScopeConfigurationTabs.vue'
 import SlotDebugger from './components/SlotDebugger.vue'
-import 'vitepress-openapi/dist/style.css'
+// import 'vitepress-openapi/dist/style.css'
 import './style.css'
 
 export default {
