@@ -23,7 +23,7 @@ export function parseOpenapi() {
     defaultTag?: string
     defaultTagDescription?: string
   }) {
-    if (import.meta.env.VITE_DEBUG) {
+    if (import.meta.env?.VITE_DEBUG) {
       console.warn('Transforming OpenAPI spec:', spec)
     }
 
