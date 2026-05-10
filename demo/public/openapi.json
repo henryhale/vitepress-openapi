@@ -1,0 +1,926 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Argentine Rock Legends",
+    "description": "The Argentine Rock Legends is an example OpenAPI specification to test OpenAPI tools and libraries. Get all the data for [all artists](#getAllArtists).\n\n>Inspired by [Scalar Galaxy](https://galaxy.scalar.com/)\n\n## Resources\n\n* https://github.com/enzonotario/vitepress-openapi\n* https://github.com/OAI/OpenAPI-Specification\n\n## Markdown Support\n\nAll descriptions *can* contain ~~tons of text~~ **Markdown**. [If GitHub supports the syntax](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax), chances are we’re supporting it, too. You can even create [internal links to reference endpoints](#createArtist).\n\n<details>\n  <summary>Examples</summary>\n\n  **Blockquotes**\n\n  > I love Argentine Rock. <3\n\n  **Tables**\n\n  | Feature          | Availability |\n  | ---------------- | ------------ |\n  | Markdown Support | ✓            |\n\n  **Accordion**\n\n  ```html\n  <details>\n    <summary>Using Details Tags</summary>\n    <p>HTML Example</p>\n  </details>\n  ```\n\n  **Images**\n\n  Yes, there’s support for images, too!\n\n  ![Placeholder image](https://images.placeholders.dev/?width=1280&height=720)\n\n</details>\n",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Enzo Notario",
+      "url": "https://enzonotario.me",
+      "email": "hi@enzonotario.me"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://stoplight.io/mocks/enzonotario/argentine-rock/122547792",
+      "description": "Mock Server"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    },
+    {
+      "apiKeyHeader": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "Some endpoints are public, but some require authentication. We provide all the required endpoints to create an account and authorize yourself."
+    },
+    {
+      "name": "Artists",
+      "description": "Everything about `Argentine Rock artists` and their contributions to music history.\n\n> **Note:** You will need to authenticate yourself to access some of these endpoints using the [](/operations/loginUser) endpoint."
+    }
+  ],
+  "paths": {
+    "/api/v1/artists": {
+      "get": {
+        "tags": [
+          "Artists"
+        ],
+        "summary": "Get all artists",
+        "description": "Get a list of all legendary Argentine Rock artists and explore their contributions to the music scene. You can get one using the [](/operations/getArtist) endpoint.",
+        "operationId": "getAllArtists",
+        "security": [
+          {}
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/offset"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success Response\n\nThe request was successful and returns a list of artists.\n\nResponse Format\n\nThe response includes:\n- A `data` array containing artist objects\n- Pagination information\n\n> **Note:** You can use the pagination parameters to navigate through large result sets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Artist"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "$ref": "#/components/schemas/PaginatedResource"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "servers": [
+            {
+                "url": "https://localhost:3000"
+            },
+            {
+                "url": "https://stoplight.io/mocks/enzonotario/argentine-rock/122547792"
+            }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Artists"
+        ],
+        "summary": "Add a new artist",
+        "description": "Add a new legendary Argentine Rock artist. Make sure they truly deserve the title! You can view it later using the [](/operations/getArtist) endpoint.",
+        "operationId": "createArtist",
+        "requestBody": {
+          "description": "Artist data",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Artist"
+              },
+              "examples": {
+                "Charly": {
+                  "value": {
+                    "name": "Charly García",
+                    "description": "One of the most influential rock musicians in Argentine history.",
+                    "image": "https://cdn.rock-legends.com/photos/charly.jpg",
+                    "band": "Sui Generis"
+                  }
+                },
+                "Maria": {
+                  "value": {
+                    "name": "Maria Gabriela Epumer",
+                    "description": "A very important rock musician in Argentine history.",
+                    "image": "https://cdn.rock-legends.com/photos/maria.jpg",
+                    "band": "Viudas e Hijas de Roque Enroll"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Artist Created Successfully\n\nThe artist has been successfully added to our database.\n\nResponse Details\n\nThe response includes the complete artist object with:\n- A newly assigned unique `id`\n- All the information you provided in the request\n\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Artist"
+                },
+                "examples": {
+                  "Charly": {
+                    "value": {
+                      "id": 1,
+                      "name": "Charly García",
+                      "description": "One of the most influential rock musicians in Argentine history.",
+                      "image": "https://cdn.rock-legends.com/photos/charly.jpg",
+                      "band": "Sui Generis"
+                    }
+                  },
+                  "Maria": {
+                    "value": {
+                      "id": 2,
+                      "name": "Maria Gabriela Epumer",
+                      "description": "A very important rock musician in Argentine history.",
+                      "image": "https://cdn.rock-legends.com/photos/maria.jpg",
+                      "band": "Viudas e Hijas de Roque Enroll"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request\n\nThe server could not process your request due to invalid input.\n\nCommon Causes\n\n- Missing required fields\n- Invalid data format\n- Validation errors\n\n> **Tip:** Check the error message in the response for specific details about what went wrong.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden\n\nYou don't have permission to create this resource.\n\nPossible Reasons\n\n- Your API key doesn't have write permissions\n- You've reached your quota limit\n- The resource is protected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/artists/{artistId}": {
+      "get": {
+        "tags": [
+          "Artists"
+        ],
+        "summary": "Get an artist",
+        "description": "Learn more about a specific Argentine Rock artist and their legacy. You can update it using the [](/operations/updateArtist) endpoint.",
+        "operationId": "getArtist",
+        "security": [
+          {}
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/artistId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Artist Found\n\nThe requested artist was found and returned successfully.\n\nResponse Format\n\nThe response includes the complete artist object with all available details:\n\n- `id`: Unique identifier for the artist\n- `name`: Full name of the artist\n- `description`: Biographical information\n- `image`: URL to the artist's photo\n- `band`: Primary band association",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Artist"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Artist Not Found\n\nThe requested artist could not be found in our database.\n\nPossible Reasons\n\n- The artist ID doesn't exist\n- The artist has been removed\n- You've entered an incorrect ID\n\n> **Tip:** Double-check the artist ID and try again. You can get a list of all available artists using the [](/operations/getAllArtists) endpoint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Artists"
+        ],
+        "summary": "Update an artist",
+        "description": "Update the information of a legendary Argentine Rock artist. Make sure to provide accurate data. You can get the current data using the [](/operations/getArtist) endpoint.",
+        "operationId": "updateArtist",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/artistId"
+          }
+        ],
+        "requestBody": {
+          "description": "Artist data",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Artist"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Artist Updated Successfully\n\nThe artist information has been successfully updated in our database.\n\nResponse Details\n\nThe response includes the complete updated artist object with all the changes you made.\n\n> **Note:** All fields are returned in the response, even if you only updated some of them.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Artist"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request\n\nThe server could not process your update request due to invalid input.\n\nCommon Causes\n\n- Missing required fields\n- Invalid data format\n- Validation errors\n\n> **Tip:** Check the error message in the response for specific details about what went wrong.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden\n\nYou don't have permission to update this artist.\n\nPossible Reasons\n\n- Your API key doesn't have write permissions\n- You're trying to update a protected artist record\n- You've reached your quota limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Artists"
+        ],
+        "summary": "Delete an artist",
+        "operationId": "deleteArtist",
+        "description": "This endpoint was used to delete artists. Unfortunately, that caused a lot of controversy. So, this endpoint is now deprecated and should not be used anymore. You can use the [](/operations/updateArtist) endpoint instead.",
+        "deprecated": true,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/artistId"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request - Deprecated Endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Deprecated Endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/artists/{artistId}/albums": {
+      "get": {
+        "tags": [
+          "Artists"
+        ],
+        "summary": "Get all albums",
+        "description": "Get a list of all albums from a legendary Argentine Rock artist. You can add a new album using the [](/operations/createAlbum) endpoint.",
+        "operationId": "getAllAlbums",
+        "security": [
+          {}
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/artistId"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/offset"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Albums Found\n\nThe request was successful and returns a list of albums for the specified artist.\n\nResponse Format\n\nThe response includes:\n- A `data` array containing album objects\n- Pagination information for navigating through large collections\n\n> **Note:** If the artist has no albums, the data array will be empty but the request will still return a 200 status code.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Album"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "$ref": "#/components/schemas/PaginatedResource"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Artists"
+        ],
+        "summary": "Add a new album",
+        "description": "Add a new album to a legendary Argentine Rock artist. Make sure it's a masterpiece! You can view all albums using the [](/operations/getAllAlbums) endpoint.",
+        "operationId": "createAlbum",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/artistId"
+          }
+        ],
+        "requestBody": {
+          "description": "Album data",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Album"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Album Created Successfully\n\nThe album has been successfully added to the artist's discography.\n\nResponse Details\n\nThe response includes the complete album object with:\n- A newly assigned unique `id`\n- All the information you provided in the request\n- The association with the artist\n\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Album"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request\n\nThe server could not process your request due to invalid album data.\n\nCommon Causes\n\n- Missing required fields (title, year)\n- Invalid year format (must be a number)\n- Year out of valid range\n\n> **Tip:** Make sure the album year is accurate and in the correct format.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden\n\nYou don't have permission to add albums to this artist.\n\nPossible Reasons\n\n- Your API key doesn't have write permissions\n- The artist's discography is locked or protected\n- You've reached your quota for album additions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/user/signup": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Create a user",
+        "description": "Create a user account to access exclusive content about Argentine Rock legends. After signing up, you can access endpoints like [](/operations/getAllArtists) to explore the data.",
+        "operationId": "createUser",
+        "security": [
+          {}
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewUser"
+              },
+              "examples": {
+                "Carlos": {
+                  "value": {
+                    "name": "Carlos",
+                    "email": "carlos@rock-legends.com",
+                    "password": "i-love-rock"
+                  }
+                },
+                "Maria": {
+                  "value": {
+                    "name": "Maria",
+                    "email": "maria@rock-legends.com",
+                    "password": "rock-n-roll"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User Created Successfully\n\nYour account has been created and you can now access the Argentine Rock Legends API.\n\nResponse Details\n\nThe response includes your user information (excluding the password) and your API key for authentication.\n\n> **Important:** Save your API key securely as it will be needed for authenticated requests.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Registration Failed\n\nThe server could not process your registration request.\n\nCommon Causes\n\n- Email address already in use\n- Missing required fields\n- Password doesn't meet security requirements\n- Invalid email format\n\n> **Tip:** Make sure your email is valid and your password is at least 8 characters long.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/user/login": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Authenticate a user",
+        "description": "Authenticate with your credentials to access protected endpoints in the Argentine Rock Legends API.",
+        "operationId": "loginUser",
+        "security": [
+          {}
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address used during registration"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "User's password"
+                  }
+                }
+              },
+              "examples": {
+                "Carlos": {
+                  "value": {
+                    "email": "carlos@rock-legends.com",
+                    "password": "i-love-rock"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication Successful\n\nYou have been successfully authenticated.\n\nResponse Details\n\nThe response includes:\n- Your user information\n- Authentication tokens (JWT token and API key)\n- Token expiration information\n\n> **Important:** Store these credentials securely and include them in subsequent API requests.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    },
+                    "token": {
+                      "type": "string",
+                      "description": "JWT token for Bearer authentication"
+                    },
+                    "api_key": {
+                      "type": "string",
+                      "description": "API key for X-API-Key header authentication"
+                    },
+                    "expires_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Expiration timestamp for the JWT token"
+                    }
+                  }
+                },
+                "examples": {
+                  "Carlos": {
+                    "value": {
+                      "user": {
+                        "id": 1,
+                        "name": "Carlos",
+                        "email": "carlos@rock-legends.com"
+                      },
+                      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                      "api_key": "rock-legends-api-key-12345",
+                      "expires_at": "2025-08-26T19:28:00Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request\n\nThe server could not process your login request.\n\nCommon Causes\n\n- Missing required fields\n- Invalid email format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication Failed\n\nThe server could not authenticate you with the provided credentials.\n\nPossible Reasons\n\n- Incorrect email or password\n- Account has been locked due to too many failed attempts\n- Account has been deactivated\n\n> **Tip:** Double-check your credentials and try again. If you've forgotten your password, use the password reset endpoint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      },
+      "apiKeyHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
+      }
+    },
+    "parameters": {
+      "artistId": {
+        "name": "artistId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "format": "int64",
+          "examples": [
+            1
+          ]
+        }
+      },
+      "limit": {
+        "name": "limit",
+        "in": "query",
+        "description": "The number of items to return",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "format": "int64",
+          "default": 10,
+          "examples": [
+            10,
+            20,
+            50
+          ]
+        }
+      },
+      "offset": {
+        "name": "offset",
+        "in": "query",
+        "description": "The number of items to skip before starting to collect the result set",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "format": "int64",
+          "default": 0
+        },
+        "examples": [
+          1,
+          23,
+          456
+        ]
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad Request\n\nThe server could not process your request due to invalid input.\n\nCommon Causes\n\n- Missing required fields\n- Invalid data format\n- Validation errors\n\n> **Tip:** Check the error message in the response for specific details about what went wrong.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Forbidden\n\nYou don't have permission to access this resource.\n\nPossible Reasons\n\n- Your API key doesn't have the required permissions\n- You've reached your quota limit\n- The resource is protected\n\n> **Note:** If you believe you should have access, please contact support.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource Not Found\n\nThe requested resource could not be found.\n\nPossible Reasons\n\n- The ID doesn't exist\n- The resource has been removed\n- You've entered an incorrect path\n\n> **Tip:** Double-check the ID and try again.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "NewUser": {
+        "type": "object",
+        "description": "Represents a new user registration for the Argentine Rock Legends API",
+        "required": [
+          "name",
+          "email",
+          "password"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Full name of the user registering for an account",
+            "examples": [
+              "Carlos",
+              "Maria"
+            ]
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address that will be used for account identification and communication. Must be a valid email format.",
+            "format": "email",
+            "examples": [
+              "carlos@rock-legends.com",
+              "maria@rock-legends.com"
+            ]
+          },
+          "password": {
+            "type": "string",
+            "description": "User's secret password for authentication. *Must be at least 8 characters* and should include a mix of letters, numbers, and special characters for better security.",
+            "minLength": 8,
+            "examples": [
+              "i-love-rock",
+              "rock-n-roll"
+            ]
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "description": "Represents a registered user in the Argentine Rock Legends system with their profile information",
+        "required": [
+          "id",
+          "name",
+          "email"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique identifier for the user account. This value is automatically generated upon registration and cannot be changed.",
+            "format": "int64",
+            "examples": [
+              1
+            ]
+          },
+          "name": {
+            "type": "string",
+            "description": "User's full name as provided during registration",
+            "examples": [
+              "Carlos"
+            ]
+          },
+          "email": {
+            "type": "string",
+            "description": "User's verified email address used for account access and notifications. This serves as the primary contact method for important account updates.",
+            "format": "email",
+            "examples": [
+              "carlos@rock-legends.com"
+            ]
+          }
+        }
+      },
+      "Artist": {
+        "type": "object",
+        "description": "Represents a legendary Argentine rock musician or performer with their biographical information and associated metadata",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique identifier for the artist in the database. Used in API requests to reference this specific artist.",
+            "format": "int64",
+            "examples": [
+              1
+            ],
+            "x-variable": "artistId"
+          },
+          "name": {
+            "type": "string",
+            "description": "Full artistic name of the musician as they are known in the Argentine rock scene",
+            "examples": [
+              "Charly García"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Biographical information about the artist and their contribution to Argentine rock music. This field supports Markdown formatting for rich text presentation.\n\nExample markdown features:\n- *Italic text* for emphasis\n- **Bold text** for strong emphasis\n- Links to [external resources](https://example.com)\n- Bullet points for listing achievements",
+            "examples": [
+              "One of the most influential rock musicians in Argentine history."
+            ]
+          },
+          "image": {
+            "type": "string",
+            "description": "URL to the artist's profile photo or official image. Should be a high-quality image suitable for display in the UI.",
+            "nullable": true,
+            "examples": [
+              "https://cdn.rock-legends.com/photos/charly.jpg"
+            ]
+          },
+          "band": {
+            "type": "string",
+            "description": "Primary musical group or band associated with this artist. Many artists have been part of multiple bands throughout their career, but this field typically contains their most notable affiliation.",
+            "examples": [
+              "Sui Generis"
+            ]
+          }
+        }
+      },
+      "Album": {
+        "type": "object",
+        "description": "Represents a music album released by an Argentine rock artist or band",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique identifier for the album",
+            "format": "int64",
+            "examples": [
+              1
+            ]
+          },
+          "name": {
+            "type": "string",
+            "description": "Official title of the album as released in Argentina",
+            "examples": [
+              "La Máquina de Hacer Pájaros"
+            ]
+          },
+          "year": {
+            "type": "integer",
+            "description": "Year when the album was first released. For remastered or re-released albums, this refers to the original release date.",
+            "format": "int64",
+            "examples": [
+              1976
+            ]
+          },
+          "image": {
+            "type": "string",
+            "description": "URL to the album cover artwork. The image should be a square format, typically showing the original album cover design.",
+            "nullable": true,
+            "examples": [
+              "https://cdn.rock-legends.com/photos/la-maquina.jpg"
+            ]
+          }
+        }
+      },
+      "PaginatedResource": {
+        "type": "object",
+        "description": "A wrapper for paginated API responses that includes both the data and pagination metadata",
+        "properties": {
+          "meta": {
+            "type": "object",
+            "description": "Metadata about the pagination state and available navigation options",
+            "properties": {
+              "limit": {
+                "type": "integer",
+                "description": "Maximum number of items returned in this response. This value matches the `limit` parameter in the request, or the default value if not specified.",
+                "format": "int64",
+                "examples": [
+                  10
+                ]
+              },
+              "offset": {
+                "type": "integer",
+                "description": "Starting position of the items returned, relative to the complete dataset. Used for pagination through large result sets.",
+                "format": "int64",
+                "examples": [
+                  0
+                ]
+              },
+              "total": {
+                "type": "integer",
+                "description": "Total number of items available in the complete dataset. Use this to calculate the total number of pages needed for pagination.",
+                "format": "int64",
+                "examples": [
+                  100
+                ]
+              },
+              "next": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "URL path for the next page of results. This is a relative path that can be appended to the API base URL.\n\n*This field will be `null` when there are no more pages available.*\n\nExample usage:\n```javascript\nif (response.meta.next) {\n  fetchNextPage(baseUrl + response.meta.next);\n}\n```",
+                "examples": [
+                  "/artists?limit=10&offset=10"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "description": "Standard error response following [RFC 7807](https://datatracker.ietf.org/doc/html/rfc7807) for Problem Details in HTTP APIs. This format provides a consistent way to communicate errors across all API endpoints.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "A URI reference that identifies the problem type. When dereferenced, it should provide human-readable documentation for the problem.",
+            "examples": [
+              "https://example.com/errors/generic-error"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "description": "Short, human-readable summary of the problem. This should not change from occurrence to occurrence of the same problem type.",
+            "examples": [
+              "Something went wrong here."
+            ]
+          },
+          "status": {
+            "type": "integer",
+            "description": "HTTP status code generated by the origin server for this occurrence of the problem. This will match the status code in the actual HTTP response.",
+            "format": "int64",
+            "examples": [
+              403
+            ]
+          },
+          "detail": {
+            "type": "string",
+            "description": "Human-readable explanation specific to this occurrence of the problem. This field can contain:\n\n- Detailed error information\n- Suggestions for resolution\n- Links to support resources\n\nDevelopers should use this information to understand what went wrong and how to fix it.",
+            "examples": [
+              "Unfortunately, we can’t provide further information."
+            ]
+          }
+        }
+      }
+    }
+  }
+}

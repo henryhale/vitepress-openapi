@@ -1,0 +1,19 @@
+{
+	"hard_tabs": false,
+ "tab_size": 2,
+	"project_name": "vitepress-openapi",
+	"languages": {
+		"JavaScript": {
+			"prettier": {
+				"singleQuote": true,
+				"semi": false,
+			},
+		},
+		"TypeScript": {
+			"prettier": {
+				"singleQuote": true,
+				"semi": false,
+			},
+		},
+	},
+}
