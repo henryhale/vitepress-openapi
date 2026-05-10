@@ -8,8 +8,84 @@ import type {
   SecurityRequirement,
 } from '../types'
 import type { OpenAPIDocument } from '@/types'
+import slugify from '@sindresorhus/slugify'
+import markdownit from 'markdown-it'
+import { titleCase } from 'scule'
+import { formatValueForDisplay } from '@/lib/format/formatValueForDisplay'
+import { getConstraints } from '@/lib/parser/constraintsParser'
+import { getSecurityUi } from '@/lib/parser/getSecurityUi'
 
 type FullRenderers = Required<Renderers>
+
+function escapeHtmlAttribute(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
+function getOperationId(op: Operation): string {
+  return (
+    op.operationId ||
+    `${op.method}-${op.path.replace(/[/{}]/g, '-').replace(/-+/g, '-')}`
+  )
+}
+
+function resolveServers(
+  spec: OpenAPIDocument,
+  op: Operation,
+  apiBaseUrl: string,
+): { url: string }[] {
+  const specAny = spec as any
+  const pathItem = specAny?.paths?.[op.path] || {}
+  const opItem = pathItem?.[op.method] || {}
+  const servers = opItem?.servers || pathItem?.servers || specAny?.servers || []
+
+  if (servers.length) {
+    return servers
+  }
+
+  return apiBaseUrl ? [{ url: apiBaseUrl }] : []
+}
+
+function escapeTableCell(value: string): string {
+  return value.replace(/\|/g, '\\|').replace(/\r?\n/g, '<br>')
+}
+
+function formatSchemaSummary(schema?: any): string {
+  if (!schema) {
+    return '-'
+  }
+  const parts: string[] = []
+  if (schema.type) {
+    parts.push(schema.type)
+  }
+  if (schema.format) {
+    parts.push(schema.format)
+  }
+  if (schema.items?.type) {
+    parts.push(`items: ${schema.items.type}`)
+  }
+  if (schema.enum) {
+    const values = Array.isArray(schema.enum)
+      ? schema.enum.map((v: any) => JSON.stringify(v)).join(', ')
+      : String(schema.enum)
+    parts.push(`enum: ${values}`)
+  }
+  if (!parts.length) {
+    return `\`${JSON.stringify(schema)}\``
+  }
+  return `\`${parts.join(', ')}\``
+}
+
+function formatExampleSummary(example?: any): string {
+  if (example === undefined) {
+    return '-'
+  }
+  const value = typeof example === 'string' ? example : JSON.stringify(example)
+  return `\`${value}\``
+}
 
 function renderParamTable(params: NormalizedParameter[]): string {
   if (!params.length) {
@@ -18,13 +94,22 @@ function renderParamTable(params: NormalizedParameter[]): string {
   let md =
     '| Name | In | Required | Description | Schema | Example |\n|------|----|----------|-------------|--------|----------|\n'
   for (const p of params) {
-    const schemaStr = p.schema
-      ? `\`${JSON.stringify(p.schema).substring(0, 50)}...\``
-      : '-'
-    const exampleStr = p.example ? `\`${JSON.stringify(p.example)}\`` : '-'
-    md += `| ${p.name} | ${p.in} | ${p.required ? 'Yes' : 'No'} | ${p.description || '-'} | ${schemaStr} | ${exampleStr} |\n`
+    const schemaStr = formatSchemaSummary(p.schema)
+    const exampleStr = formatExampleSummary(p.example)
+    const description = p.description ? escapeTableCell(p.description) : '-'
+    md += `| ${escapeTableCell(p.name)} | ${p.in} | ${p.required ? 'Yes' : 'No'} | ${description} | ${schemaStr} | ${exampleStr} |\n`
   }
   return `${md}\n`
+}
+
+function renderParameterGroup(
+  title: string,
+  params: NormalizedParameter[],
+): string {
+  if (!params.length) {
+    return ''
+  }
+  return `### ${title}\n\n${renderParamTable(params)}`
 }
 
 const defaultSchema = (schema: any, title?: string): string => {
@@ -72,6 +157,9 @@ const defaultRequestBodyContent = (
       if (ex.summary) {
         md += `${ex.summary}\n\n`
       }
+      if (ex.description) {
+        md += `${ex.description}\n\n`
+      }
       md += r.example(ex.value, mediaType, 'Example')
     }
   }
@@ -85,7 +173,10 @@ const defaultResponseDetail = (
   r: FullRenderers,
 ): string => {
   const statusText = statusCode === 'default' ? 'Default' : statusCode
-  let md = `### ${statusText} ${response.description ? `- ${response.description}` : ''}\n\n`
+  let md = `### ${statusText}\n\n`
+  if (response.description) {
+    md += `${response.description}\n\n`
+  }
   if (response.content) {
     for (const [mediaType, mediaObj] of Object.entries(response.content)) {
       md += r.requestBodyContent(mediaType, mediaObj, op, r)
@@ -97,9 +188,12 @@ const defaultResponseDetail = (
 export function createDefaultRenderers(): FullRenderers {
   const r: FullRenderers = {
     operationHeader: (op: Operation) => {
-      let md = `# \`${op.method.toUpperCase()}\` ${op.path} ${op.deprecated ? '~~(deprecated)~~' : ''}\n\n`
-      if (op.summary) {
-        md += `**Summary**: ${op.summary}\n\n`
+      const title =
+        op.summary || op.operationId || `${op.method.toUpperCase()} ${op.path}`
+      let md = `# ${title}\n\n`
+      md += `\`${op.method.toUpperCase()}\` ${op.path}\n\n`
+      if (op.operationId) {
+        md += `**Operation ID**: \`${op.operationId}\`\n\n`
       }
       if (op.description) {
         md += `${op.description}\n\n`
@@ -126,10 +220,14 @@ export function createDefaultRenderers(): FullRenderers {
       }
       return md
     },
-    pathParameters: renderParamTable,
-    queryParameters: renderParamTable,
-    headerParameters: renderParamTable,
-    cookieParameters: renderParamTable,
+    pathParameters: (params: NormalizedParameter[]) =>
+      renderParameterGroup('Path Parameters', params),
+    queryParameters: (params: NormalizedParameter[]) =>
+      renderParameterGroup('Query Parameters', params),
+    headerParameters: (params: NormalizedParameter[]) =>
+      renderParameterGroup('Header Parameters', params),
+    cookieParameters: (params: NormalizedParameter[]) =>
+      renderParameterGroup('Cookie Parameters', params),
     requestBody: (
       body: RequestBody,
       op: Operation,
@@ -172,129 +270,96 @@ export function createDefaultRenderers(): FullRenderers {
       spec: OpenAPIDocument,
       apiBaseUrl: string = '',
     ) => {
-      const opId =
-        op.operationId || `${op.method}-${op.path.replace(/\//g, '-')}`
-      const config = {
-        method: op.method,
+      const securityUi = getSecurityUi(
+        (op.security ?? (spec as any).security ?? []) as any,
+        (spec as any).components?.securitySchemes ?? {},
+      )
+      const data = {
+        operationId: getOperationId(op),
         path: op.path,
+        method: op.method,
+        servers: resolveServers(spec, op, apiBaseUrl),
         parameters: op.parameters,
-        requestBody: !!op.requestBody,
-        baseUrl: apiBaseUrl,
+        requestBody: op.requestBody,
+        securityUi,
       }
-      const configStr = JSON.stringify(config).replace(/`/g, '\\`')
-
-      return `
-<script setup>
-import { ref, reactive } from 'vue'
-
-const config = ${configStr}
-
-const method = config.method.toUpperCase()
-const base = config.baseUrl || ''
-const path = config.path
-const params = config.parameters || []
-const hasBody = config.requestBody
-
-const pathParams = params.filter(p => p.in === 'path')
-const queryParams = params.filter(p => p.in === 'query')
-const headerParams = params.filter(p => p.in === 'header')
-const formValues = reactive(Object.fromEntries(params.map(p => [p.name, ''])))
-const bodyValue = ref('')
-const loading = ref(false)
-const response = ref(null)
-const error = ref(null)
-
-const buildUrl = () => {
-  let url = base + path
-  pathParams.forEach(p => {
-    url = url.replace(\`{\${p.name}}\`, encodeURIComponent(formValues[p.name]))
-  })
-  const query = queryParams.filter(p => formValues[p.name] !== '').map(p => \`\${encodeURIComponent(p.name)}=\${encodeURIComponent(formValues[p.name])}\`).join('&')
-  if (query) url += '?' + query
-  return url
-}
-
-const sendRequest = async () => {
-  loading.value = true
-  error.value = null
-  response.value = null
-  const url = buildUrl()
-  const headers = {}
-  headerParams.forEach(p => { if (formValues[p.name]) headers[p.name] = formValues[p.name] })
-  const fetchOptions = { method, headers }
-  if (method !== 'GET' && method !== 'HEAD' && hasBody) {
-    if (bodyValue.value) {
-      try {
-        fetchOptions.body = bodyValue.value
-        if (!headers['Content-Type']) headers['Content-Type'] = 'application/json'
-      } catch (e) {}
-    }
-  }
-  try {
-    const res = await fetch(url, fetchOptions)
-    const text = await res.text()
-    try {
-      response.value = JSON.stringify(JSON.parse(text), null, 2)
-    } catch {
-      response.value = text
-    }
-  } catch (err) {
-    error.value = err.message
-  } finally {
-    loading.value = false
-  }
-}
-</script>
-
-<div class="try-it-widget">
-  <h3>Try It Out</h3>
-  <div class="form-grid">
-    <div v-for="param in pathParams" :key="param.name" class="form-field">
-      <label>{{ param.name }} (path){{ param.required ? '*' : '' }}</label>
-      <input v-model="formValues[param.name]" :placeholder="param.description || 'Enter ' + param.name" />
-    </div>
-    <div v-for="param in queryParams" :key="param.name" class="form-field">
-      <label>{{ param.name }} (query){{ param.required ? '*' : '' }}</label>
-      <input v-model="formValues[param.name]" :placeholder="param.description || ''" />
-    </div>
-    <div v-for="param in headerParams" :key="param.name" class="form-field">
-      <label>{{ param.name }} (header){{ param.required ? '*' : '' }}</label>
-      <input v-model="formValues[param.name]" :placeholder="param.description || ''" />
-    </div>
-  </div>
-  <div v-if="hasBody" class="request-body-field">
-    <label>Request Body (JSON)</label>
-    <textarea v-model="bodyValue" rows="10" placeholder='{...}'></textarea>
-  </div>
-  <button @click="sendRequest" :disabled="loading">{{ loading ? 'Sending...' : 'Send' }}</button>
-  <div v-if="error" class="error">{{ error }}</div>
-  <pre v-if="response" class="response">{{ response }}</pre>
-</div>
-
-<style scoped>
-.try-it-widget { border: 1px solid #ccc; padding: 1em; margin: 1em 0; }
-.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.5em; }
-.form-field label { display: block; font-weight: bold; }
-.form-field input, textarea { width: 100%; padding: 0.5em; }
-.error { color: red; margin-top: 1em; }
-.response { background: #fafafa; padding: 1em; margin-top: 1em; white-space: pre-wrap; word-break: break-all; }
-button { padding: 0.5em 1em; cursor: pointer; }
-</style>`
+      const dataStr = escapeHtmlAttribute(JSON.stringify(data))
+      return `<OAPlayground data="${dataStr}" />`
     },
     security: (requirements: SecurityRequirement[], spec: OpenAPIDocument) => {
       if (!requirements.length) {
         return ''
       }
-      let md = '## Security\n\n'
-      for (const req of requirements) {
-        for (const [scheme, scopes] of Object.entries(req)) {
-          md += `- **${scheme}**`
-          if (scopes.length) {
-            md += ` (scopes: ${scopes.join(', ')})`
+      const securityUi = getSecurityUi(
+        requirements as any,
+        (spec as any).components?.securitySchemes ?? {},
+      )
+      if (!securityUi.length) {
+        return ''
+      }
+
+      const formatType = (scheme: any): string => {
+        if (scheme.type === 'http') {
+          return `HTTP (${scheme.scheme})`
+        }
+        if (scheme.type === 'apiKey') {
+          return `API Key (${scheme.in}: ${scheme.name})`
+        }
+        if (scheme.type === 'openIdConnect') {
+          return `OpenID Connect (${scheme.openIdConnectUrl})`
+        }
+        if (scheme.type === 'oauth2') {
+          return 'OAuth2'
+        }
+        return ''
+      }
+
+      let md = '## Authorizations\n\n'
+      securityUi.forEach((item, index) => {
+        if (
+          item.id &&
+          (securityUi.length > 1 || Object.keys(item.schemes).length > 1)
+        ) {
+          md += `### ${item.id}\n\n`
+        }
+
+        for (const [schemeName, scheme] of Object.entries(item.schemes)) {
+          md += `- **${schemeName}**\n`
+          if (scheme.description) {
+            md += `  - ${scheme.description}\n`
           }
+          const typeValue = formatType(scheme)
+          if (typeValue) {
+            md += `  - Type: ${typeValue}\n`
+          }
+
+          if (scheme.type === 'oauth2' && scheme.flows) {
+            for (const [flow, flowDetails] of Object.entries(scheme.flows)) {
+              md += `  - ${flow} flow:\n`
+              const details = flowDetails as any
+              if (details.authorizationUrl) {
+                md += `    - Authorization URL: ${details.authorizationUrl}\n`
+              }
+              if (details.tokenUrl) {
+                md += `    - Token URL: ${details.tokenUrl}\n`
+              }
+              if (details.scopes && Object.keys(details.scopes).length) {
+                md += `    - Scopes:\n`
+                for (const [scope, desc] of Object.entries(details.scopes)) {
+                  md += `      - \`${scope}\`: ${desc}\n`
+                }
+              }
+            }
+          }
+        }
+
+        if (index < securityUi.length - 1) {
+          md += '\n**or**\n\n'
+        } else {
           md += '\n'
         }
-      }
+      })
+
       return md
     },
     deprecationNotice: (op: Operation) => '> ⚠️ **Deprecated**\n\n',
