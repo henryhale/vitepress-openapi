@@ -39,7 +39,7 @@ export function useShiki() {
             async () => (await import('@shikijs/langs/json')).default,
             async () => (await import('@shikijs/langs/xml')).default,
             async () => (await import('@shikijs/langs/markdown')).default,
-          ]
+          ],
         )
 
         shiki = await createHighlighterCore({
