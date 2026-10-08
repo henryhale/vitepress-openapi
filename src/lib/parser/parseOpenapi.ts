@@ -13,6 +13,13 @@ import { generateRequestBodyUi } from './generateRequestBodyUi'
 import { generateResponseUi } from './generateResponseUi'
 import { generateSecurityUi } from './generateSecurityUi'
 
+function hasAllOf(value: unknown): boolean {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+  return 'allOf' in value || Object.values(value).some(hasAllOf)
+}
+
 export function parseOpenapi() {
   function transformSync({
     spec,
@@ -78,13 +85,15 @@ export function parseOpenapi() {
 
     let parsedSpec = { ...specContent } as ParsedOpenAPI
 
-    const [mergedSpec, errMerge] = $trycatch(() => merge(
-      transformSync({
+    const [mergedSpec, errMerge] = $trycatch(() => {
+      const transformed = transformSync({
         spec,
         defaultTag,
         defaultTagDescription,
-      }),
-    ) as ParsedOpenAPI)
+      })
+      // allof-merge walks and clones the whole spec; skip it when there is nothing to merge.
+      return (hasAllOf(transformed) ? merge(transformed) : transformed) as ParsedOpenAPI
+    })
     parsedSpec = errMerge ? parsedSpec : mergedSpec
 
     const [dereferencedSpec, errDereference] = $trycatch(() => dereferenceWithAnnotationsSync(parsedSpec as JSONSchema) as ParsedOpenAPI)
