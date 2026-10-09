@@ -44,6 +44,11 @@ export interface OAProperty {
   meta?: Metadata
 }
 
+// Shared schemas are converted once and reused, so the output is a DAG instead of
+// an exponentially large tree. Safe across calls: resolveCircularRef never mutates
+// a node it has already walked.
+const memo = new WeakMap<object, OAProperty>()
+
 class UiPropertyFactory {
   static createBaseProperty(
     name: string,
@@ -170,6 +175,21 @@ class UiPropertyFactory {
       return UiPropertyFactory.createCircularReferenceProperty(name, schema.circularReference)
     }
 
+    let property = memo.get(schema)
+    if (!property) {
+      property = UiPropertyFactory.buildUiProperty(schema)
+      memo.set(schema, property)
+    }
+
+    // Shallow copy: callers reassign `meta`/`required` on the returned object.
+    return { ...property, name, required }
+  }
+
+  static buildUiProperty(
+    schema: Partial<OpenAPI.SchemaObject>,
+    name = '',
+    required = false,
+  ): OAProperty {
     if (schema.oneOf) {
       return UiPropertyFactory.createOneOfProperty(schema.oneOf, name, schema, required)
     }
