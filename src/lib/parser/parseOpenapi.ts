@@ -2,7 +2,6 @@ import type { JSONSchema } from '@trojs/openapi-dereference'
 import type { OpenAPIDocument, ParsedOpenAPI } from '../../types'
 
 import { $trycatch } from '@tszen/trycatch'
-import { merge } from 'allof-merge'
 import { parseSpec } from '../utils/parseSpec'
 import { dereferenceWithAnnotationsSync } from './dereferenceWithAnnotations'
 import { generateCodeSamples } from './generateCodeSamples'
@@ -12,13 +11,7 @@ import { generateMissingTags } from './generateMissingTags'
 import { generateRequestBodyUi } from './generateRequestBodyUi'
 import { generateResponseUi } from './generateResponseUi'
 import { generateSecurityUi } from './generateSecurityUi'
-
-function hasAllOf(value: unknown): boolean {
-  if (!value || typeof value !== 'object') {
-    return false
-  }
-  return 'allOf' in value || Object.values(value).some(hasAllOf)
-}
+import { mergeAllOf } from './mergeAllOf'
 
 export function parseOpenapi() {
   function transformSync({
@@ -91,8 +84,7 @@ export function parseOpenapi() {
         defaultTag,
         defaultTagDescription,
       })
-      // allof-merge walks and clones the whole spec; skip it when there is nothing to merge.
-      return (hasAllOf(transformed) ? merge(transformed) : transformed) as ParsedOpenAPI
+      return mergeAllOf(transformed) as ParsedOpenAPI
     })
     parsedSpec = errMerge ? parsedSpec : mergedSpec
 
